@@ -11,7 +11,7 @@ class MainApp extends HTMLElement{
         const mainTemplate = html `
         
             <div class="main-app-container">
-
+                <users-view></users-view>
             </div>
         `
 
