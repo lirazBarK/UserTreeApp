@@ -31,16 +31,13 @@ class UsersView extends HTMLElement {
         render(userViewTemplate, this.shadowRoot);
     }
 
-    changeClickedStatus(e) {
+    changeButtonTextForUsers(e) {
         const userElements = this.shadowRoot.querySelectorAll("user-element");
-        if (e.target.getAttribute("status") === 'hide') {
-            e.target.setAttribute('status', 'show');
-        } else {
             for (let i = 0; i < userElements.length; i++) {
-                userElements[i].setAttribute('status', 'show');
+                if(e.target !== userElements[i]) {
+                    userElements[i].setAttribute('status', 'collapsed');
+                }
             }
-            e.target.setAttribute('status', 'hide');
-        }
     }
 
     connectedCallback() {
@@ -48,7 +45,7 @@ class UsersView extends HTMLElement {
         this.users.forEach(user => {
             const userElement = document.createElement('user-element');
             userElement.addEventListener('changeClickedStatus', (e) => {
-                this.changeClickedStatus(e);
+                this.changeButtonTextForUsers(e);
             })
 
             userElement.userDetails = user;

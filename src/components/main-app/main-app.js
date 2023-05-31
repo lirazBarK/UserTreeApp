@@ -27,18 +27,18 @@ const mockObject = {
     userCount: 4
 }
 
-class MainApp extends HTMLElement{
+class MainApp extends HTMLElement {
     constructor() {
         super();
-        this.attachShadow({mode:"open"});
+        this.attachShadow({mode: "open"});
         this.render();
     }
 
     render() {
-        const mainTemplate = html `
-        
+        const mainTemplate = html`
+
             <div class="main-app-container">
-                
+
             </div>
         `
 
@@ -51,7 +51,7 @@ class MainApp extends HTMLElement{
         const treeModel = document.createElement('tree-model');
 
         usersView.users = mockObject.users;
-        treeModel.objectData = mockObject;
+        treeModel.mockData = mockObject;
 
         mainContainer.appendChild(usersView);
         mainContainer.appendChild(treeModel);

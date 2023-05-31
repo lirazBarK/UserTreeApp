@@ -8,12 +8,12 @@ class TreeModel extends HTMLElement {
         this.render();
     }
 
-    set objectData(data) {
-        this._objectData = data;
+    set mockData(data) {
+        this._mockData = data;
     }
 
-    get objectData() {
-        return this._objectData;
+    get mockData() {
+        return this._mockData;
     }
 
     render() {
@@ -44,7 +44,6 @@ class TreeModel extends HTMLElement {
                     top: 0;
                 }
 
-                /* Additional styles for value labels */
                 span.value-label {
                     color: #666;
                 }
@@ -152,13 +151,13 @@ class TreeModel extends HTMLElement {
     }
 
     getUserIndexByObject(searchObject) {
-        const users = this.objectData.users;
+        const users = this.mockData.users;
         for (let i = 0; i < users.length; i++) {
             if (this.isObjectEqual(users[i], searchObject)) {
                 return i;
             }
         }
-        return -1; // Not found
+        return -1;
     }
 
     isObjectEqual(obj1, obj2) {
@@ -200,24 +199,15 @@ class TreeModel extends HTMLElement {
 
 
     connectedCallback() {
-        // Add the tree nodes to the HTML
         const tree = this.shadowRoot.getElementById('tree');
-        this.createTreeNodes(tree, this.objectData);
-        document.addEventListener('expandUser', (e) => {
+        this.createTreeNodes(tree, this.mockData);
+        document.addEventListener('expandOrCollapseUserInTree', (e) => {
             const userList = this.shadowRoot.querySelector('.users-list');
             const lis = userList.querySelectorAll('li');
             for (let i = 0; i < lis.length; i++) {
                 this.collapseList(lis[i]);
             }
-            this.expandElementsByObject(tree, this.objectData, e.detail.userObject);
-        })
-
-        document.addEventListener('collapseUser', (e) => {
-            const userList = this.shadowRoot.querySelector('.users-list');
-            const lis = userList.querySelectorAll('li');
-            for (let i = 0; i < lis.length; i++) {
-                this.collapseList(lis[i]);
-            }
+            if(e.detail.expandUser) this.expandElementsByObject(tree, this.mockData, e.detail.userObject);
         })
     }
 

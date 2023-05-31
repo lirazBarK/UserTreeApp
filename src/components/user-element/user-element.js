@@ -7,7 +7,7 @@ class UserElement extends HTMLElement {
 
     constructor() {
         super();
-        this.attachShadow({mode:"open"});
+        this.attachShadow({mode: "open"});
         this.render();
     }
 
@@ -20,62 +20,48 @@ class UserElement extends HTMLElement {
     }
 
     render() {
-        const userElementTemplate = html `
+        const userElementTemplate = html`
             <style>
                 .user-container {
-                    border: 1px solid black; /* Adds a black border to the div */
-                    display: flex; /* Uses flexbox layout for the div and its children */
-                    justify-content: space-between; /* Distributes the elements with equal space between them */
-                    align-items: center; /* Centers the elements vertically within the div */
-                    padding: 10px; /* Adds some padding inside the div */
-
+                    border: 1px solid black;
+                    display: flex; 
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 10px;
                     width: 30%;
                 }
 
                 .user-container p {
-                    margin: 0; /* Removes any default margin on the p elements */
+                    margin: 0; 
                 }
 
                 .user-container button {
-                    /* Add any additional styling you want for the button */
+                    width:150px;
                 }
             </style>
             <div class="user-container">
-                
+
             </div>
         `
         render(userElementTemplate, this.shadowRoot);
     }
 
-    expandUserInTree(target) {
-        const event = new CustomEvent('expandUser', {
-            detail: {userObject: target.userDetails},
+    expandOrCollapseUserInTree(expandUserBoolean) {
+        const event = new CustomEvent('expandOrCollapseUserInTree', {
+            detail: {userObject: this.userDetails, expandUser: expandUserBoolean},
             bubbles: true,
             cancelable: true,
             composed: false
         })
 
         document.dispatchEvent(event);
-
-    }
-
-    collapseUserInTree(target) {
-        const event = new CustomEvent('collapseUser', {
-            detail: {userObject: target.userDetails},
-            bubbles: true,
-            cancelable: true,
-            composed: false
-        })
-
-        document.dispatchEvent(event);
-
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
         switch (name) {
             case 'status':
                 const detailsButton = this.shadowRoot.getElementById('details-button');
-                if (newValue === 'show') {
+                if (newValue === 'collapsed') {
                     detailsButton.textContent = 'Show Details'
                 } else {
                     detailsButton.textContent = 'Hide Details'
@@ -87,12 +73,14 @@ class UserElement extends HTMLElement {
     connectedCallback() {
         const userContainer = this.shadowRoot.querySelector('.user-container');
         const button = document.createElement('button');
+
         button.id = 'details-button';
         button.textContent = "Show Details";
-
         button.addEventListener('click', (e) => {
-            if(this.getAttribute('status') === 'show' || this.getAttribute('status') == null) {
-                this.expandUserInTree(this);
+            const userStatus = this.getAttribute('status');
+            if (userStatus === 'collapsed' || userStatus== null) {
+                this.setAttribute('status', 'expanded');
+                this.expandOrCollapseUserInTree(true);
 
                 const event = new CustomEvent('changeClickedStatus', {
                     detail: {userElement: this},
@@ -100,29 +88,20 @@ class UserElement extends HTMLElement {
                     cancelable: true,
                     composed: false
                 })
-
                 this.dispatchEvent(event);
+
             } else {
-                this.collapseUserInTree(this);
-
-                const event = new CustomEvent('changeClickedStatus', {
-                    detail: {userElement: this},
-                    bubbles: true,
-                    cancelable: true,
-                    composed: false
-                })
-
-                this.dispatchEvent(event);
+                this.setAttribute('status', 'collapsed');
+                this.expandOrCollapseUserInTree(false);
             }
         })
 
         Object.values(this.userDetails).forEach(value => {
             const p = document.createElement('p');
-            p.textContent= value;
-
-            // Append the div to the custom element
+            p.textContent = value;
             userContainer.appendChild(p);
         });
+
         userContainer.appendChild(button);
     }
 }
