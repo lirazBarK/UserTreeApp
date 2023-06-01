@@ -1,6 +1,6 @@
 import {html, render} from '/node_modules/lit-html/lit-html.js'
 
-class UserElement extends HTMLElement {
+class ViewModelElement extends HTMLElement {
     static get observedAttributes() {
         return ['status'];
     }
@@ -11,18 +11,18 @@ class UserElement extends HTMLElement {
         this.render();
     }
 
-    set userDetails(userDetails) {
-        this._userDetails = userDetails;
+    set elementDetails(elementDetails) {
+        this._elementDetails = elementDetails;
     }
 
-    get userDetails() {
-        return this._userDetails;
+    get elementDetails() {
+        return this._elementDetails;
     }
 
     render() {
-        const userElementTemplate = html`
+        const ViewModelElementTemplate = html`
             <style>
-                .user-container {
+                .view-model-element-container {
                     border: 1px solid black;
                     display: flex; 
                     justify-content: space-between;
@@ -39,16 +39,16 @@ class UserElement extends HTMLElement {
                     width:150px;
                 }
             </style>
-            <div class="user-container">
+            <div class="view-model-element-container">
 
             </div>
         `
-        render(userElementTemplate, this.shadowRoot);
+        render(ViewModelElementTemplate, this.shadowRoot);
     }
 
-    expandOrCollapseUserInTree(expandUserBoolean) {
-        const event = new CustomEvent('expandOrCollapseUserInTree', {
-            detail: {userObject: this.userDetails, expandUser: expandUserBoolean},
+    expandOrCollapseElementInTree(expandElementBoolean) {
+        const event = new CustomEvent('expandOrCollapseElementInTree', {
+            detail: {viewElement: this.elementDetails, expandElement: expandElementBoolean},
             bubbles: true,
             cancelable: true,
             composed: false
@@ -71,19 +71,19 @@ class UserElement extends HTMLElement {
     }
 
     connectedCallback() {
-        const userContainer = this.shadowRoot.querySelector('.user-container');
+        const viewModelContainer = this.shadowRoot.querySelector('.view-model-element-container');
         const button = document.createElement('button');
 
         button.id = 'details-button';
         button.textContent = "Show Details";
         button.addEventListener('click', (e) => {
-            const userStatus = this.getAttribute('status');
-            if (userStatus === 'collapsed' || userStatus== null) {
+            const viewElementStatus = this.getAttribute('status');
+            if (viewElementStatus === 'collapsed' || viewElementStatus== null) {
                 this.setAttribute('status', 'expanded');
-                this.expandOrCollapseUserInTree(true);
+                this.expandOrCollapseElementInTree(true);
 
                 const event = new CustomEvent('changeClickedStatus', {
-                    detail: {userElement: this},
+                    detail: {viewElement: this},
                     bubbles: true,
                     cancelable: true,
                     composed: false
@@ -92,18 +92,18 @@ class UserElement extends HTMLElement {
 
             } else {
                 this.setAttribute('status', 'collapsed');
-                this.expandOrCollapseUserInTree(false);
+                this.expandOrCollapseElementInTree(false);
             }
         })
 
-        Object.values(this.userDetails).forEach(value => {
+        Object.values(this.elementDetails.element).forEach(value => {
             const p = document.createElement('p');
             p.textContent = value;
-            userContainer.appendChild(p);
+            viewModelContainer.appendChild(p);
         });
 
-        userContainer.appendChild(button);
+        viewModelContainer.appendChild(button);
     }
 }
 
-customElements.define('user-element', UserElement);
+customElements.define('view-model-element', ViewModelElement);

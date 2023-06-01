@@ -8,12 +8,12 @@ class TreeModel extends HTMLElement {
         this.render();
     }
 
-    set mockData(data) {
-        this._mockData = data;
+    set mockDataObject(data) {
+        this._mockDataObject = data;
     }
 
-    get mockData() {
-        return this._mockData;
+    get mockDataObject() {
+        return this._mockDataObject;
     }
 
     render() {
@@ -70,9 +70,9 @@ class TreeModel extends HTMLElement {
             const li = document.createElement('li');
             const label = document.createElement('span');
             const keyLabel = document.createTextNode(key);
-            if (keyLabel.textContent === 'users') {
-                label.id = 'users-span';
-                li.classList.add('users-list')
+            if (keyLabel.textContent === this.mockDataObject.viewFocusName) {
+                label.id = `${this.mockDataObject.viewFocusName}-span`;
+                li.classList.add(this.mockDataObject.viewFocusName)
             }
             label.appendChild(keyLabel);
             li.appendChild(label);
@@ -89,6 +89,7 @@ class TreeModel extends HTMLElement {
 
                 this.createTreeNodes(li, value);
             } else {
+                li.classList.add('no-children');
                 const valueLabel = document.createTextNode(`: ${value}`);
                 const span = document.createElement('span');
                 span.classList.add('value-label');
@@ -147,21 +148,26 @@ class TreeModel extends HTMLElement {
             }
             const sign = li.querySelector('.toggle-sign');
             sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
+        } else {
+            const ul = li.closest('ul');
+            ul.parentNode.classList.remove('collapsed');
+            ul.classList.remove('open');
+            const sign = ul.parentNode.querySelector('.toggle-sign');
+            sign.innerText = ul.parentNode.classList.contains('collapsed') ? '-' : '+';
         }
     }
 
-    getUserIndexByObject(searchObject) {
-        const users = this.mockData.users;
-        for (let i = 0; i < users.length; i++) {
-            if (this.isObjectEqual(users[i], searchObject)) {
+    getElementIndex(parentTargetElements, target) {
+        for (let i = 0; i < parentTargetElements.length; i++) {
+            if (this.isElementEqual(parentTargetElements[i], target.element)) {
                 return i;
             }
         }
         return -1;
     }
 
-    isObjectEqual(obj1, obj2) {
-        return JSON.stringify(obj1) === JSON.stringify(obj2);
+    isElementEqual(elm1, elm2) {
+        return JSON.stringify(elm1) === JSON.stringify(elm2);
     }
 
     findSpanWithValue(element, targetValue) {
@@ -179,35 +185,47 @@ class TreeModel extends HTMLElement {
         }
     }
 
-    expandUser(indexOfUser) {
-        const userList = this.shadowRoot.querySelector('.users-list');
-        const usersSpan = this.shadowRoot.getElementById('users-span');
-        const toggleSign = usersSpan.children[0];
+    expandElement(indexOfElement) {
+        const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
+        const elementSpan = this.shadowRoot.getElementById(`${this.mockDataObject.viewFocusName}-span`);
+        const toggleSign = elementSpan.children[0];
         if (toggleSign) {
             this.expandList(toggleSign);
         }
-        this.findSpanWithValue(userList, indexOfUser.toString());
+        this.findSpanWithValue(elementList, indexOfElement.toString());
     }
 
 
-    expandElementsByObject(parentElement, node, targetObject) {
-        const indexOfUser = this.getUserIndexByObject(targetObject);
-        if (indexOfUser !== -1) {
-            this.expandUser(indexOfUser);
+    expandElementInTree(parentElement, node, target) {
+        const parentTargetName = target.viewElementName;
+        const parentTargetElements = this.mockDataObject.mockData[parentTargetName];
+        if (Array.isArray(parentTargetElements)) {
+            const indexOfElement = this.getElementIndex(parentTargetElements, target);
+            if (indexOfElement !== -1) {
+                this.expandElement(indexOfElement);
+            }
+        } else {
+            if (this.isElementEqual(parentTargetElements, target.element)) {
+                const elementSpan = this.shadowRoot.getElementById(`${this.mockDataObject.viewFocusName}-span`);
+                const toggleSign = elementSpan.children[0];
+                if (toggleSign) {
+                    this.expandList(toggleSign);
+                }
+            }
         }
     }
 
 
     connectedCallback() {
         const tree = this.shadowRoot.getElementById('tree');
-        this.createTreeNodes(tree, this.mockData);
-        document.addEventListener('expandOrCollapseUserInTree', (e) => {
-            const userList = this.shadowRoot.querySelector('.users-list');
-            const lis = userList.querySelectorAll('li');
+        this.createTreeNodes(tree, this.mockDataObject.mockData);
+        document.addEventListener('expandOrCollapseElementInTree', (e) => {
+            const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
+            const lis = elementList.querySelectorAll('li');
             for (let i = 0; i < lis.length; i++) {
                 this.collapseList(lis[i]);
             }
-            if(e.detail.expandUser) this.expandElementsByObject(tree, this.mockData, e.detail.userObject);
+            if (e.detail.expandElement) this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
         })
     }
 
