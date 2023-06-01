@@ -2,10 +2,11 @@ import {html, render} from '/node_modules/lit-html/lit-html.js'
 
 
 const mockObject = {
-    map: {
-        'key1': 'value1',
-        'key2': 'value2'
-    },
+    map:
+        {
+            'key1': 'value1',
+            'key2': 'value2'
+        },
     users:
         [{
             'name': 'Liraz',
@@ -24,7 +25,46 @@ const mockObject = {
                 'age': 35
             },
         ],
-    userCount: 4
+    emails:
+        [{
+            email: 'liraz@bar.com',
+            name: 'Liraz',
+            text: 'yada yada'
+        },
+            {
+                email: 'Amir@welwel.com',
+                name: 'Amir',
+                text: 'yada bada bom'
+            },
+        ],
+}
+
+const mockObjectTwo = {
+    simpleArray: ['1', '2', 'Liraz'],
+    emails: [
+        {
+            email: 'liraz@bar.com',
+            name: 'Liraz',
+            text: 'yada yada'
+        },
+        {
+            email: 'Amir@welwel.com',
+            name: 'Amir',
+            text: 'yada bada bom'
+        },
+
+    ],
+    complexData: [
+        {
+            data: {
+                field: 'yep',
+                fieldTwo: 'yep yep'
+            }
+        },
+        {
+            moreData: [1, 3, 4]
+        }
+    ]
 }
 
 class MainApp extends HTMLElement {
@@ -46,14 +86,16 @@ class MainApp extends HTMLElement {
     }
 
     connectedCallback() {
+        const mockObjectForApp = mockObject;
+        const viewFocus = 'map';
         const mainContainer = this.shadowRoot.querySelector('.main-app-container');
-        const usersView = document.createElement('users-view');
+        const viewModel = document.createElement('view-model');
         const treeModel = document.createElement('tree-model');
 
-        usersView.users = mockObject.users;
-        treeModel.mockData = mockObject;
+        viewModel.viewElementsObject = {viewElements: mockObjectForApp[viewFocus], viewElementsName: viewFocus};
+        treeModel.mockDataObject = {mockData: mockObjectForApp, viewFocusName: viewFocus};
 
-        mainContainer.appendChild(usersView);
+        mainContainer.appendChild(viewModel);
         mainContainer.appendChild(treeModel);
 
     }
