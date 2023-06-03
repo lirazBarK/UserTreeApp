@@ -70,10 +70,6 @@ class TreeModel extends HTMLElement {
             li.dataset.position = newPath;
             const label = document.createElement('span');
             const keyLabel = document.createTextNode(key);
-            if (key === this.mockDataObject.viewFocusName) {
-                label.id = `${this.mockDataObject.viewFocusName}-span`;
-                li.classList.add(this.mockDataObject.viewFocusName)
-            }
             label.appendChild(keyLabel);
             li.appendChild(label);
 
@@ -153,8 +149,7 @@ class TreeModel extends HTMLElement {
         }
     }
 
-    expandList(toggleSign) {
-        const li = toggleSign.parentNode.parentNode;
+    expandList(li) {
         if (li.classList.contains('has-children')) {
             li.classList.add('collapsed');
             const ul = li.querySelector('ul');
@@ -163,37 +158,35 @@ class TreeModel extends HTMLElement {
             }
             const sign = li.querySelector('.toggle-sign');
             sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
+            this.expandList(li.parentNode);
+        } else {
+            if (li.parentNode.id !== 'tree') {
+                this.expandList(li.parentNode);
+            }
         }
     }
 
-    collapseList(li) {
-        if (li.classList.contains('has-children')) {
-            li.classList.remove('collapsed');
-            const ul = li.querySelector('ul');
-            if (ul) {
-                ul.classList.remove('open');
+    collapseList() {
+        const collapsedItems = this.shadowRoot.querySelectorAll('.collapsed');
+        if (collapsedItems.length > 0) {
+            for (let i = 0; i < collapsedItems.length; i++) {
+                collapsedItems[i].classList.remove('collapsed');
+                const sign = collapsedItems[i].querySelector('.toggle-sign');
+                sign.innerText = collapsedItems[i].classList.contains('collapsed') ? '-' : '+';
             }
-            const sign = li.querySelector('.toggle-sign');
-            sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
-        } else {
-            const ul = li.closest('ul');
-            ul.parentNode.classList.remove('collapsed');
-            ul.classList.remove('open');
-            const sign = ul.parentNode.querySelector('.toggle-sign');
-            sign.innerText = ul.parentNode.classList.contains('collapsed') ? '-' : '+';
+        }
+        const openItems = this.shadowRoot.querySelectorAll('.open');
+        if (openItems.length > 0) {
+            for (let i = 0; i < openItems.length; i++) {
+                openItems[i].classList.remove('open');
+            }
         }
     }
 
     expandElement(valueToExpand) {
-        const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
-        const elementSpan = this.shadowRoot.getElementById(`${this.mockDataObject.viewFocusName}-span`);
-        const toggleSign = elementSpan.children[0];
-        if (toggleSign) {
-            this.expandList(toggleSign);
-        }
         const toggleSignOfValue = valueToExpand[0].querySelector('.toggle-sign');
-        this.expandList(toggleSignOfValue);
-        toggleSignOfValue.scrollIntoView({ behavior: 'smooth' });
+        this.expandList(valueToExpand[0]);
+        toggleSignOfValue.scrollIntoView({behavior: 'smooth'});
     }
 
 
@@ -208,11 +201,7 @@ class TreeModel extends HTMLElement {
         const tree = this.shadowRoot.getElementById('tree');
         this.createTreeNodes(tree, this.mockDataObject.mockData, '');
         document.addEventListener('expandOrCollapseElementInTree', (e) => {
-            const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
-            const lis = elementList.querySelectorAll('li');
-            for (let i = 0; i < lis.length; i++) {
-                this.collapseList(lis[i]);
-            }
+            this.collapseList();
             if (e.detail.expandElement) this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
         })
     }

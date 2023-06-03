@@ -43,7 +43,7 @@ class ViewModel extends HTMLElement {
     createView(element, index) {
         const viewModel = this.shadowRoot.querySelector('.view-model-container');
         const viewModelElement = document.createElement('view-model-element');
-        viewModelElement.dataset.position = `${this.viewElementsObject.viewElementsName}[${index}]`;
+        viewModelElement.dataset.position = `${this.viewElementsObject.viewElementsPath}[${index}]`;
         viewModelElement.addEventListener('changeClickedStatus', (e) => {
             this.changeButtonTextForViewElements(e);
         })
