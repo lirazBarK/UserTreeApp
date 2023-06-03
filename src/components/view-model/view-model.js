@@ -40,27 +40,26 @@ class ViewModel extends HTMLElement {
             }
     }
 
-    createView(element) {
+    createView(element, index) {
         const viewModel = this.shadowRoot.querySelector('.view-model-container');
         const viewModelElement = document.createElement('view-model-element');
+        viewModelElement.dataset.position = `${this.viewElementsObject.viewElementsPath}[${index}]`;
         viewModelElement.addEventListener('changeClickedStatus', (e) => {
             this.changeButtonTextForViewElements(e);
         })
 
-        viewModelElement.elementDetails = {
-            element: element,
-            viewElementName: this.viewElementsObject.viewElementsName
-        };
+        viewModelElement.elementDetails = element;
         viewModel.appendChild(viewModelElement);
     }
 
     connectedCallback() {
-        if(Array.isArray(this.viewElementsObject.viewElements)) {
-            this.viewElementsObject.viewElements.forEach(viewElement => {
-                this.createView(viewElement)
-            })
+        const viewElements = this.viewElementsObject.viewElements;
+        if(Array.isArray(viewElements)) {
+            for (let i = 0; i < viewElements.length; i++) {
+                this.createView(viewElements[i], i);
+            }
         } else {
-            this.createView(this.viewElementsObject.viewElements)
+            this.createView(viewElements, 0)
         }
     }
 }

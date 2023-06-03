@@ -61,19 +61,15 @@ class TreeModel extends HTMLElement {
         render(treeModelTemplate, this.shadowRoot);
     }
 
-    createTreeNodes(parentElement, data) {
+    createTreeNodes(parentElement, data, position) {
         const ul = document.createElement('ul');
-
         for (const key in data) {
             const value = data[key];
-
             const li = document.createElement('li');
+            const newPath = position ? `${position}.${key}` : key;
+            li.dataset.position = newPath;
             const label = document.createElement('span');
             const keyLabel = document.createTextNode(key);
-            if (keyLabel.textContent === this.mockDataObject.viewFocusName) {
-                label.id = `${this.mockDataObject.viewFocusName}-span`;
-                li.classList.add(this.mockDataObject.viewFocusName)
-            }
             label.appendChild(keyLabel);
             li.appendChild(label);
 
@@ -86,8 +82,18 @@ class TreeModel extends HTMLElement {
                 toggleSign.addEventListener('click', (e) => {
                     this.toggleCollapse(e);
                 });
-
-                this.createTreeNodes(li, value);
+                if (!Array.isArray(value)) {
+                    this.createTreeNodes(li, value, newPath);
+                } else {
+                    for (let i = 0; i < value.length; i++) {
+                        const indexUl = document.createElement('ul');
+                        const indexLi = this.createToggleForIndex(i);
+                        indexLi.dataset.position = `${newPath}[${i}]`;
+                        indexUl.appendChild(indexLi);
+                        li.appendChild(indexUl);
+                        this.createTreeNodes(indexLi, value[i], `${newPath}[${i}]`);
+                    }
+                }
             } else {
                 li.classList.add('no-children');
                 const valueLabel = document.createTextNode(`: ${value}`);
@@ -103,6 +109,23 @@ class TreeModel extends HTMLElement {
         parentElement.appendChild(ul);
     }
 
+    createToggleForIndex(i) {
+        const indexLi = document.createElement('li');
+        const label = document.createElement('span');
+        const keyLabel = document.createTextNode(i);
+        label.appendChild(keyLabel);
+        indexLi.appendChild(label);
+        indexLi.classList.add('has-children');
+        const toggleSignIndex = document.createElement('span');
+        toggleSignIndex.classList.add('toggle-sign');
+        toggleSignIndex.innerText = '+';
+        label.prepend(toggleSignIndex);
+        toggleSignIndex.addEventListener('click', (e) => {
+            this.toggleCollapse(e);
+        });
+
+        return indexLi;
+    }
 
     toggleCollapse(event) {
         const toggleSign = event.target.closest('.toggle-sign');
@@ -126,8 +149,7 @@ class TreeModel extends HTMLElement {
         }
     }
 
-    expandList(toggleSign) {
-        const li = toggleSign.parentNode.parentNode;
+    expandList(li) {
         if (li.classList.contains('has-children')) {
             li.classList.add('collapsed');
             const ul = li.querySelector('ul');
@@ -136,95 +158,50 @@ class TreeModel extends HTMLElement {
             }
             const sign = li.querySelector('.toggle-sign');
             sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
-        }
-    }
-
-    collapseList(li) {
-        if (li.classList.contains('has-children')) {
-            li.classList.remove('collapsed');
-            const ul = li.querySelector('ul');
-            if (ul) {
-                ul.classList.remove('open');
-            }
-            const sign = li.querySelector('.toggle-sign');
-            sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
+            this.expandList(li.parentNode);
         } else {
-            const ul = li.closest('ul');
-            ul.parentNode.classList.remove('collapsed');
-            ul.classList.remove('open');
-            const sign = ul.parentNode.querySelector('.toggle-sign');
-            sign.innerText = ul.parentNode.classList.contains('collapsed') ? '-' : '+';
-        }
-    }
-
-    getElementIndex(parentTargetElements, target) {
-        for (let i = 0; i < parentTargetElements.length; i++) {
-            if (this.isElementEqual(parentTargetElements[i], target.element)) {
-                return i;
+            if (li.parentNode.id !== 'tree') {
+                this.expandList(li.parentNode);
             }
         }
-        return -1;
     }
 
-    isElementEqual(elm1, elm2) {
-        return JSON.stringify(elm1) === JSON.stringify(elm2);
-    }
-
-    findSpanWithValue(element, targetValue) {
-        const spans = element.querySelectorAll('span');
-        for (let i = 0; i < spans.length; i++) {
-            if (spans[i].textContent === `+${targetValue}`) {
-                const toggleSign = spans[i].children[0];
-                this.expandList(toggleSign);
+    collapseList() {
+        const collapsedItems = this.shadowRoot.querySelectorAll('.collapsed');
+        if (collapsedItems.length > 0) {
+            for (let i = 0; i < collapsedItems.length; i++) {
+                collapsedItems[i].classList.remove('collapsed');
+                const sign = collapsedItems[i].querySelector('.toggle-sign');
+                sign.innerText = collapsedItems[i].classList.contains('collapsed') ? '-' : '+';
             }
         }
-        // If not found in current element, recursively search in the child elements
-        const children = element.children;
-        for (let i = 0; i < children.length; i++) {
-            this.findSpanWithValue(children[i], targetValue);
+        const openItems = this.shadowRoot.querySelectorAll('.open');
+        if (openItems.length > 0) {
+            for (let i = 0; i < openItems.length; i++) {
+                openItems[i].classList.remove('open');
+            }
         }
     }
 
-    expandElement(indexOfElement) {
-        const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
-        const elementSpan = this.shadowRoot.getElementById(`${this.mockDataObject.viewFocusName}-span`);
-        const toggleSign = elementSpan.children[0];
-        if (toggleSign) {
-            this.expandList(toggleSign);
-        }
-        this.findSpanWithValue(elementList, indexOfElement.toString());
+    expandElement(valueToExpand) {
+        const toggleSignOfValue = valueToExpand[0].querySelector('.toggle-sign');
+        this.expandList(valueToExpand[0]);
+        toggleSignOfValue.scrollIntoView({behavior: 'smooth'});
     }
 
 
     expandElementInTree(parentElement, node, target) {
-        const parentTargetName = target.viewElementName;
-        const parentTargetElements = this.mockDataObject.mockData[parentTargetName];
-        if (Array.isArray(parentTargetElements)) {
-            const indexOfElement = this.getElementIndex(parentTargetElements, target);
-            if (indexOfElement !== -1) {
-                this.expandElement(indexOfElement);
-            }
-        } else {
-            if (this.isElementEqual(parentTargetElements, target.element)) {
-                const elementSpan = this.shadowRoot.getElementById(`${this.mockDataObject.viewFocusName}-span`);
-                const toggleSign = elementSpan.children[0];
-                if (toggleSign) {
-                    this.expandList(toggleSign);
-                }
-            }
-        }
+        const position = `${target.dataset.position}`;
+        const valueToExpand = this.shadowRoot.querySelectorAll(`[data-position="${position}"]`);
+        this.expandElement(valueToExpand);
     }
 
 
     connectedCallback() {
         const tree = this.shadowRoot.getElementById('tree');
-        this.createTreeNodes(tree, this.mockDataObject.mockData);
+        this.createTreeNodes(tree, this.mockDataObject.mockData, '');
         document.addEventListener('expandOrCollapseElementInTree', (e) => {
-            const elementList = this.shadowRoot.querySelector(`.${this.mockDataObject.viewFocusName}`);
-            const lis = elementList.querySelectorAll('li');
-            for (let i = 0; i < lis.length; i++) {
-                this.collapseList(lis[i]);
-            }
+            this.collapseList();
             if (e.detail.expandElement) this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
         })
     }

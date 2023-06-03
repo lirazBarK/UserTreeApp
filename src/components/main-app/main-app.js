@@ -7,11 +7,15 @@ const mockObject = {
             'key1': 'value1',
             'key2': 'value2'
         },
-    users:
+    users: {clients:
         [{
             'name': 'Liraz',
             'age': 32
         },
+            {
+                'name': 'Liraz',
+                'age': 32
+            },
             {
                 'name': 'Amir',
                 'age': 31
@@ -24,7 +28,7 @@ const mockObject = {
                 'name': 'Liron',
                 'age': 35
             },
-        ],
+        ]},
     emails:
         [{
             email: 'liraz@bar.com',
@@ -87,13 +91,14 @@ class MainApp extends HTMLElement {
 
     connectedCallback() {
         const mockObjectForApp = mockObject;
-        const viewFocus = 'map';
+        const viewFocus = 'clients'
+        const viewPath = 'users.clients';
         const mainContainer = this.shadowRoot.querySelector('.main-app-container');
         const viewModel = document.createElement('view-model');
         const treeModel = document.createElement('tree-model');
-
-        viewModel.viewElementsObject = {viewElements: mockObjectForApp[viewFocus], viewElementsName: viewFocus};
-        treeModel.mockDataObject = {mockData: mockObjectForApp, viewFocusName: viewFocus};
+        const reduceByFocus = viewPath.split('.').reduce((previous, current) => previous[current], mockObjectForApp);
+        viewModel.viewElementsObject = {viewElements: reduceByFocus, viewElementsPath: viewPath, viewElementsName: viewFocus};
+        treeModel.mockDataObject = {mockData: mockObjectForApp};
 
         mainContainer.appendChild(viewModel);
         mainContainer.appendChild(treeModel);
