@@ -13,6 +13,10 @@ const mockObject = {
             'age': 32
         },
             {
+                'name': 'Liraz',
+                'age': 32
+            },
+            {
                 'name': 'Amir',
                 'age': 31
             },
@@ -87,7 +91,7 @@ class MainApp extends HTMLElement {
 
     connectedCallback() {
         const mockObjectForApp = mockObject;
-        const viewFocus = 'map';
+        const viewFocus = 'users';
         const mainContainer = this.shadowRoot.querySelector('.main-app-container');
         const viewModel = document.createElement('view-model');
         const treeModel = document.createElement('tree-model');

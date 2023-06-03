@@ -48,7 +48,7 @@ class ViewModelElement extends HTMLElement {
 
     expandOrCollapseElementInTree(expandElementBoolean) {
         const event = new CustomEvent('expandOrCollapseElementInTree', {
-            detail: {viewElement: this.elementDetails, expandElement: expandElementBoolean},
+            detail: {viewElement: this, expandElement: expandElementBoolean},
             bubbles: true,
             cancelable: true,
             composed: false
@@ -96,7 +96,7 @@ class ViewModelElement extends HTMLElement {
             }
         })
 
-        Object.values(this.elementDetails.element).forEach(value => {
+        Object.values(this.elementDetails).forEach(value => {
             const p = document.createElement('p');
             p.textContent = value;
             viewModelContainer.appendChild(p);
