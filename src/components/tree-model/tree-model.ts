@@ -1,64 +1,50 @@
-import {html, render} from '/node_modules/lit-html/lit-html.js'
+import {LitElement, html, css} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
 
+@customElement('tree-model')
+class TreeModel extends LitElement {
 
-class TreeModel extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({mode: "open"});
-        this.render();
-    }
+    static styles = css `
+      ul {
+        list-style-type: none;
+        padding-left: 20px;
+      }
 
-    set mockDataObject(data) {
-        this._mockDataObject = data;
-    }
+      li {
+        position: relative;
+        padding-left: 20px;
+      }
 
-    get mockDataObject() {
-        return this._mockDataObject;
-    }
+      li.has-children > ul {
+        display: none;
+      }
+
+      li.collapsed.has-children > ul {
+        display: block;
+      }
+
+      span.toggle-sign {
+        margin-right: 5px;
+        cursor: pointer;
+        left: 0;
+        top: 0;
+      }
+
+      span.value-label {
+        color: #666;
+      }
+    `;
+
+    @property()
+    mockDataObject: object;
 
     render() {
-        const treeModelTemplate = html`
-            <style>
-                ul {
-                    list-style-type: none;
-                    padding-left: 20px;
-                }
-
-                li {
-                    position: relative;
-                    padding-left: 20px;
-                }
-
-                li.has-children > ul {
-                    display: none;
-                }
-
-                li.collapsed.has-children > ul {
-                    display: block;
-                }
-
-                span.toggle-sign {
-                    margin-right: 5px;
-                    cursor: pointer;
-                    left: 0;
-                    top: 0;
-                }
-
-                span.value-label {
-                    color: #666;
-                }
-
-
-            </style>
-
+        return html`
             <div id="tree">
                 <h1>Tree view</h1>
 
             </div>
-
         `
-
-        render(treeModelTemplate, this.shadowRoot);
     }
 
     createTreeNodes(parentElement, data, position) {
@@ -167,15 +153,16 @@ class TreeModel extends HTMLElement {
     }
 
     collapseList() {
-        const collapsedItems = this.shadowRoot.querySelectorAll('.collapsed');
+        const collapsedItems = this.renderRoot.querySelectorAll('.collapsed');
         if (collapsedItems.length > 0) {
             for (let i = 0; i < collapsedItems.length; i++) {
                 collapsedItems[i].classList.remove('collapsed');
                 const sign = collapsedItems[i].querySelector('.toggle-sign');
+                //@ts-ignore
                 sign.innerText = collapsedItems[i].classList.contains('collapsed') ? '-' : '+';
             }
         }
-        const openItems = this.shadowRoot.querySelectorAll('.open');
+        const openItems = this.renderRoot.querySelectorAll('.open');
         if (openItems.length > 0) {
             for (let i = 0; i < openItems.length; i++) {
                 openItems[i].classList.remove('open');
@@ -192,20 +179,22 @@ class TreeModel extends HTMLElement {
 
     expandElementInTree(parentElement, node, target) {
         const position = `${target.dataset.position}`;
-        const valueToExpand = this.shadowRoot.querySelectorAll(`[data-position="${position}"]`);
+        const valueToExpand = this.renderRoot.querySelectorAll(`[data-position="${position}"]`);
         this.expandElement(valueToExpand);
     }
 
-
-    connectedCallback() {
+    firstUpdated() {
         const tree = this.shadowRoot.getElementById('tree');
+        //@ts-ignore
         this.createTreeNodes(tree, this.mockDataObject.mockData, '');
         document.addEventListener('expandOrCollapseElementInTree', (e) => {
             this.collapseList();
-            if (e.detail.expandElement) this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
+            //@ts-ignore
+            if (e.detail.expandElement) {
+                //@ts-ignore
+                this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
+            }
         })
     }
 
 }
-
-customElements.define('tree-model', TreeModel);
