@@ -1,25 +1,20 @@
-import {html, render} from '/node_modules/lit-html/lit-html.js'
+import {LitElement, html} from 'lit';
+import {customElement, property} from 'lit/decorators.js';
 
+type viewElementsObject = {
+    viewElements: any,
+    viewElementsPath: string,
+    viewElementsName: string
+};
 
-class ViewModel extends HTMLElement {
+@customElement('view-model')
+class ViewModel extends LitElement {
 
-    constructor() {
-        super();
-        this.attachShadow({mode: "open"});
-        this.render()
-    }
-
-    set viewElementsObject(viewElementsObject) {
-        this._viewElementsObject = viewElementsObject;
-    }
-
-    get viewElementsObject() {
-        return this._viewElementsObject;
-    }
+    @property()
+    viewElementsObject: viewElementsObject;
 
     render() {
-        const ViewModelTemplate = html`
-
+        return html`
             <div class="view-model-container">
                 <h2>${this.viewElementsObject.viewElementsName}</h2>
             </div>
@@ -27,32 +22,31 @@ class ViewModel extends HTMLElement {
                 <h3>Count: ${this.viewElementsObject.viewElements.length}</h3>
             </div>
         `
-
-        render(ViewModelTemplate, this.shadowRoot);
     }
 
     changeButtonTextForViewElements(e) {
-        const viewModelElements = this.shadowRoot.querySelectorAll("view-model-element");
-            for (let i = 0; i < viewModelElements.length; i++) {
-                if(e.target !== viewModelElements[i]) {
-                    viewModelElements[i].setAttribute('status', 'collapsed');
-                }
+        const viewModelElements = this.renderRoot.querySelectorAll("view-model-element");
+        for (let i = 0; i < viewModelElements.length; i++) {
+            if(e.target !== viewModelElements[i]) {
+                let element: any = viewModelElements[i];
+                element.status = 'collapsed';
             }
+        }
     }
 
     createView(element, index) {
-        const viewModel = this.shadowRoot.querySelector('.view-model-container');
+        const viewModel = this.renderRoot.querySelector('.view-model-container');
         const viewModelElement = document.createElement('view-model-element');
         viewModelElement.dataset.position = `${this.viewElementsObject.viewElementsPath}[${index}]`;
         viewModelElement.addEventListener('changeClickedStatus', (e) => {
             this.changeButtonTextForViewElements(e);
         })
-
+        //@ts-ignore
         viewModelElement.elementDetails = element;
         viewModel.appendChild(viewModelElement);
     }
 
-    connectedCallback() {
+    firstUpdated() {
         const viewElements = this.viewElementsObject.viewElements;
         if(Array.isArray(viewElements)) {
             for (let i = 0; i < viewElements.length; i++) {
@@ -63,5 +57,3 @@ class ViewModel extends HTMLElement {
         }
     }
 }
-
-customElements.define('view-model', ViewModel);
