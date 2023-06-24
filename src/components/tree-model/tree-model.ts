@@ -1,200 +1,112 @@
 import {LitElement, html, css} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import {customElement, property, query, queryAll} from 'lit/decorators.js';
+import '@shoelace-style/shoelace/dist/components/tree/tree.js';
+import '@shoelace-style/shoelace/dist/components/tree-item/tree-item.js';
+import '@shoelace-style/shoelace/dist/components/button/button.js';
+
+
+type dataObject = {
+    mockData: object
+};
 
 @customElement('tree-model')
 class TreeModel extends LitElement {
 
-    static styles = css `
-      ul {
-        list-style-type: none;
-        padding-left: 20px;
-      }
-
-      li {
-        position: relative;
-        padding-left: 20px;
-      }
-
-      li.has-children > ul {
-        display: none;
-      }
-
-      li.collapsed.has-children > ul {
+    static styles = css`
+      :host {
         display: block;
-      }
-
-      span.toggle-sign {
-        margin-right: 5px;
-        cursor: pointer;
-        left: 0;
-        top: 0;
-      }
-
-      span.value-label {
-        color: #666;
       }
     `;
 
     @property()
-    mockDataObject: object;
+    mockDataObject: dataObject;
+
+    @query('#tree')
+    tree;
+
+    @queryAll('.tree-item')
+    treeItems;
 
     render() {
         return html`
             <div id="tree">
                 <h1>Tree view</h1>
-
+                <sl-tree>
+                    ${this.createTreeNodes(this.mockDataObject.mockData, '')}
+                </sl-tree>
             </div>
         `
     }
 
-    createTreeNodes(parentElement, data, position) {
-        const ul = document.createElement('ul');
-        for (const key in data) {
-            const value = data[key];
-            const li = document.createElement('li');
+    createTreeNodes(data: any, position: string) {
+        return Object.entries(data).map(([key, value]: [string, any]) => {
             const newPath = position ? `${position}.${key}` : key;
-            li.dataset.position = newPath;
-            const label = document.createElement('span');
-            const keyLabel = document.createTextNode(key);
-            label.appendChild(keyLabel);
-            li.appendChild(label);
+            return html`
+                ${typeof value === 'object' &&
+                value !== null ?
+                        !Array.isArray(value) ? html`
+                                    <sl-tree-item class="tree-item" data-position=${newPath}>
+                                        ${key}
+                                        ${this.createTreeNodes(value, newPath)}
+                                    </sl-tree-item>
+                                `
+                                : html`
+                                    <sl-tree-item class="tree-item" data-position=${newPath}>
+                                        ${key}
+                                        ${value.map((data, index) => {
+                                            return html`
+                                                <sl-tree-item class="tree-item" data-position="${newPath}[${index}]">
+                                                    ${index}
+                                                    ${this.createTreeNodes(data, `${newPath}[${index}]`)}
+                                                </sl-tree-item>
+                                            `
+                                        })
+                                        }
+                                    </sl-tree-item>
 
-            if (typeof value === 'object' && value !== null) {
-                li.classList.add('has-children');
-                const toggleSign = document.createElement('span');
-                toggleSign.classList.add('toggle-sign');
-                toggleSign.innerText = '+';
-                label.prepend(toggleSign);
-                toggleSign.addEventListener('click', (e) => {
-                    this.toggleCollapse(e);
-                });
-                if (!Array.isArray(value)) {
-                    this.createTreeNodes(li, value, newPath);
-                } else {
-                    for (let i = 0; i < value.length; i++) {
-                        const indexUl = document.createElement('ul');
-                        const indexLi = this.createToggleForIndex(i);
-                        indexLi.dataset.position = `${newPath}[${i}]`;
-                        indexUl.appendChild(indexLi);
-                        li.appendChild(indexUl);
-                        this.createTreeNodes(indexLi, value[i], `${newPath}[${i}]`);
-                    }
+                                `
+                        : html`
+                            <sl-tree-item class="tree-item">${key}: ${value}</sl-tree-item>`
                 }
+            `
+        })
+    }
+
+    expandList(treeItem) {
+        if (treeItem.parentNode.id !== 'tree') {
+            const childTreeItems = treeItem.getChildrenItems();
+            if (childTreeItems.length > 0) {
+                treeItem.expanded = true;
+                this.expandList(treeItem.parentNode);
             } else {
-                li.classList.add('no-children');
-                const valueLabel = document.createTextNode(`: ${value}`);
-                const span = document.createElement('span');
-                span.classList.add('value-label');
-                span.appendChild(valueLabel);
-                label.appendChild(span);
-            }
-
-            ul.appendChild(li);
-        }
-
-        parentElement.appendChild(ul);
-    }
-
-    createToggleForIndex(i) {
-        const indexLi = document.createElement('li');
-        const label = document.createElement('span');
-        const keyLabel = document.createTextNode(i);
-        label.appendChild(keyLabel);
-        indexLi.appendChild(label);
-        indexLi.classList.add('has-children');
-        const toggleSignIndex = document.createElement('span');
-        toggleSignIndex.classList.add('toggle-sign');
-        toggleSignIndex.innerText = '+';
-        label.prepend(toggleSignIndex);
-        toggleSignIndex.addEventListener('click', (e) => {
-            this.toggleCollapse(e);
-        });
-
-        return indexLi;
-    }
-
-    toggleCollapse(event) {
-        const toggleSign = event.target.closest('.toggle-sign');
-        if (toggleSign) {
-            this.handleToggleSign(toggleSign);
-            event.stopPropagation();
-
-        }
-    }
-
-    handleToggleSign(toggleSign) {
-        const li = toggleSign.parentNode.parentNode;
-        if (li.classList.contains('has-children')) {
-            li.classList.toggle('collapsed');
-            const ul = li.querySelector('ul');
-            if (ul) {
-                ul.classList.toggle('open');
-            }
-            const sign = li.querySelector('.toggle-sign');
-            sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
-        }
-    }
-
-    expandList(li) {
-        if (li.classList.contains('has-children')) {
-            li.classList.add('collapsed');
-            const ul = li.querySelector('ul');
-            if (ul) {
-                ul.classList.add('open');
-            }
-            const sign = li.querySelector('.toggle-sign');
-            sign.innerText = li.classList.contains('collapsed') ? '-' : '+';
-            this.expandList(li.parentNode);
-        } else {
-            if (li.parentNode.id !== 'tree') {
-                this.expandList(li.parentNode);
+                this.expandList(treeItem.parentNode);
             }
         }
     }
 
     collapseList() {
-        const collapsedItems = this.renderRoot.querySelectorAll('.collapsed');
-        if (collapsedItems.length > 0) {
-            for (let i = 0; i < collapsedItems.length; i++) {
-                collapsedItems[i].classList.remove('collapsed');
-                const sign = collapsedItems[i].querySelector('.toggle-sign');
-                //@ts-ignore
-                sign.innerText = collapsedItems[i].classList.contains('collapsed') ? '-' : '+';
-            }
-        }
-        const openItems = this.renderRoot.querySelectorAll('.open');
-        if (openItems.length > 0) {
-            for (let i = 0; i < openItems.length; i++) {
-                openItems[i].classList.remove('open');
-            }
-        }
+        const treeItemArray: any = Array.from(this.treeItems);
+        const treeItemsToCollapse = treeItemArray.filter(treeItem => treeItem.expanded === true);
+        treeItemsToCollapse.forEach(item => item.expanded = false);
+        this.requestUpdate();
     }
 
-    expandElement(valueToExpand) {
-        const toggleSignOfValue = valueToExpand[0].querySelector('.toggle-sign');
-        this.expandList(valueToExpand[0]);
-        toggleSignOfValue.scrollIntoView({behavior: 'smooth'});
-    }
-
-
-    expandElementInTree(parentElement, node, target) {
+    expandElementInTree(target) {
         const position = `${target.dataset.position}`;
-        const valueToExpand = this.renderRoot.querySelectorAll(`[data-position="${position}"]`);
-        this.expandElement(valueToExpand);
+        const treeItem = this.renderRoot.querySelectorAll(`[data-position="${position}"]`);
+        this.expandList(treeItem[0]);
+        this.requestUpdate();
+        treeItem[0].scrollIntoView({behavior: 'auto'});
     }
 
     firstUpdated() {
-        const tree = this.shadowRoot.getElementById('tree');
-        //@ts-ignore
-        this.createTreeNodes(tree, this.mockDataObject.mockData, '');
         document.addEventListener('expandOrCollapseElementInTree', (e) => {
             this.collapseList();
             //@ts-ignore
             if (e.detail.expandElement) {
                 //@ts-ignore
-                this.expandElementInTree(tree, this.mockDataObject.mockData, e.detail.viewElement);
+                this.expandElementInTree(e.detail.viewElement);
             }
         })
     }
-
 }

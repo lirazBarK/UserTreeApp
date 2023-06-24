@@ -7,11 +7,13 @@
     "tsc": "node_modules\\.bin\\tsc --project ./tsconfig.json",
     "build": "npm run tsc",
     "watch": "npm run tsc -- -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start" : "web-dev-server --node-resolve --open"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@shoelace-style/shoelace": "^2.4.0",
     "lit": "^2.7.5",
     "lit-html": "^2.7.4",
     "typescript": "^5.1.3"
